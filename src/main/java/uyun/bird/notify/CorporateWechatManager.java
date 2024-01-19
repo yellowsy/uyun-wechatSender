@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.*;
 import org.apache.commons.collections4.CollectionUtils;
+import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import uyun.bird.notify.common.ServiceManager;
 import uyun.bird.notify.common.utils.ConfigUtils;
@@ -65,10 +66,11 @@ public class CorporateWechatManager {
         log.info("mobileUrl={}", mobileUrl);
     }
 
-    private static final RestTemplate restTemplate = new RestTemplate();
+    private static final RestTemplate restTemplate = MyRestTemplate.createRestTemplate();
 
     public static String getAccessToken(){
         String url = baserUrl + "/wechat/gettoken?corpid=" + corpId + "&corpsecret=" + corpSecret;
+        log.info("getTokenUrl:{}",url);
         ResponseEntity<String> response  = restTemplate.getForEntity(url, String.class);
         JSONObject json = JSON.parseObject(response.getBody());
         log.info("access_token={}", JsonUtil.encode(json.getString("access_token")));
