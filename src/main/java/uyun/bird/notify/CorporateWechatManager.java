@@ -16,6 +16,7 @@ import uyun.bird.notify.common.utils.JsonUtil;
 import uyun.tenant.serviceapi.UserServiceApi;
 import uyun.tenant.serviceapi.dto.UserDTO;
 
+import java.net.URI;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -79,6 +80,7 @@ public class CorporateWechatManager {
 
     private static String getUserIdByMobile(String mobile){
         String url = baserUrl + "/wechat/user/getuserid?access_token=" + getAccessToken();
+        log.info("根据电话获取用户id的Url:{}",url);
         //请求头
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -89,7 +91,7 @@ public class CorporateWechatManager {
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> responseEntity = restTemplate.exchange(url, HttpMethod.POST, requestEntity, String.class);
         JSONObject json = JSON.parseObject(responseEntity.getBody());
-        log.info("userid={}", json.getString("userid"));
+        log.info("微信用户userid={}", json.getString("userid"));
         return json.getString("userid");
     }
 
@@ -99,6 +101,7 @@ public class CorporateWechatManager {
             throw new ApiException("no receivers");
         }
         String url = baserUrl + "/wechat/message/send?access_token=" + getAccessToken();
+        log.info("推送卡片Url:{}",url);
         //要发送的微信用户
         List<String> wechatIds = convertUserToWechatIds(userIds);
         String touser = StringUtils.join(wechatIds.toArray(), "|");
@@ -110,19 +113,22 @@ public class CorporateWechatManager {
         if(StringUtils.isEmpty(ticketId)){
             throw new ApiException("no ticket_id");
         }
-        //消息内容
-        String description = jsonMsg.getString("description");
+        //工单流水号
+        String ticketFlowNo = jsonMsg.getString("ticketFlowNo");
+        //工单标题
+        String ticketTitle = jsonMsg.getString("ticketTitle");
         //拼接移动端跳转地址
         String mobileLink = getMobileLink(ticketId);
         //请求体参数
-        HashMap<String, Object> messageParams = setMessageParams(touser, mobileLink,description);
+        HashMap<String, Object> messageParams = setMessageParams(touser, mobileLink,ticketFlowNo,ticketTitle);
         String requestBody = JSON.toJSONString(messageParams);
         //请求头
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         //发送请求
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBody, headers);
-        restTemplate.postForLocation(url, HttpMethod.POST, requestEntity);
+        ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
+        log.info("发送推送卡片请求返回结果：{}",response);
     }
 
     //根据传入的用户id查询微信用户id
@@ -130,7 +136,6 @@ public class CorporateWechatManager {
         UserServiceApi userServiceApi = ServiceManager.getInstance().getUserServiceApi();
         userIds = userIds.stream().distinct().collect(Collectors.toList());
         log.info("优云用户id:{}",userIds);
-        //userIds:e10adc3949ba59abbe56e057f20f88dd
         List<UserDTO> users = userServiceApi.listByUserIds(userIds);
         log.info("优云用户:{}",users);
         LinkedList<String> resList = new LinkedList<>();
@@ -172,7 +177,7 @@ public class CorporateWechatManager {
     }
 
     //构造发送的消息参数
-    private static HashMap<String, Object> setMessageParams(String touser, String mobileLink,String description){
+    private static HashMap<String, Object> setMessageParams(String touser, String mobileLink,String ticketFlowNo,String ticketTitle){
         HashMap<String, Object> messageParams  = new HashMap<>();
         messageParams.put("touser", touser);
         messageParams.put("msgtype", "textcard");
@@ -182,7 +187,7 @@ public class CorporateWechatManager {
 
         HashMap<String, Object> textCardParams = new HashMap<>();
         textCardParams.put("title","ITSM代办工单提醒");
-        textCardParams.put("description",description);
+        textCardParams.put("description","<div class=\"highlight\">工单流水号："+ticketFlowNo+"</div> <div class=\"highlight\">工单标题："+ticketTitle+"</div>");
         textCardParams.put("url",mobileLink);
         textCardParams.put("btntxt","点击处理");
 
