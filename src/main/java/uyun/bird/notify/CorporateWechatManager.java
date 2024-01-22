@@ -119,12 +119,12 @@ public class CorporateWechatManager {
         String ticketTitle = jsonMsg.getString("ticketTitle");
         //拼接移动端跳转地址
         String mobileLink = getMobileLink(ticketId);
-        //请求体参数
-        HashMap<String, Object> messageParams = setMessageParams(touser, mobileLink,ticketFlowNo,ticketTitle);
-        String requestBody = JSON.toJSONString(messageParams);
         //请求头
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
+        //请求体参数
+        HashMap<String, Object> messageParams = setMessageParams(touser, mobileLink,ticketFlowNo,ticketTitle);
+        String requestBody = JSON.toJSONString(messageParams);
         //发送请求
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
