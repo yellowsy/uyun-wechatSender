@@ -64,6 +64,7 @@ public class CorporateWechatSenderImpl implements NotifyServiceCommonSender {
             String[] keyValue = line.split(":");
             if (keyValue.length >= 2) {
                 String key = keyValue[0].trim();
+                //防止内容中有:将字符串分割
                 String value = String.join(":", Arrays.copyOfRange(keyValue, 1, keyValue.length)).trim();
                 jsonObject.put(key, value);
             }

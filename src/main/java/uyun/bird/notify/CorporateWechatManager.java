@@ -125,6 +125,7 @@ public class CorporateWechatManager {
         //请求体参数
         HashMap<String, Object> messageParams = setMessageParams(touser, mobileLink,ticketFlowNo,ticketTitle);
         String requestBody = JSON.toJSONString(messageParams);
+        log.info("消息参数：{}",requestBody);
         //发送请求
         HttpEntity<Object> requestEntity = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(url, requestEntity, String.class);
@@ -195,8 +196,6 @@ public class CorporateWechatManager {
         messageParams.put("enable_id_trans",0);
         messageParams.put("enable_duplicate_check",0);
         messageParams.put("duplicate_check_interval",1800);
-
-        log.info("消息参数：{}",JSON.toJSONString(messageParams));
         return messageParams;
     }
 }
